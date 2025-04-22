@@ -58,23 +58,50 @@ def recommend(movie):
 # Streamlit UI
 st.set_page_config(page_title="Movie Recommender", layout="centered")
 
-# Background styling
-background_color = """
+# Stylish animated CSS
+animated_css = """
 <style>
 body {
     background-color: #f5f5f5;
-    color: #333333;
+    color: black;
+    font-family: 'Segoe UI', sans-serif;
 }
 [data-testid="stAppViewContainer"] {
     background-image: linear-gradient(to right, #ddeaff, #ffffff);
     background-size: cover;
 }
+h1.title {
+    text-align: center;
+    color: black;
+    font-size: 3em;
+    animation: slideDown 1s ease-in-out;
+}
+@keyframes slideDown {
+    from { transform: translateY(-50px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+.stButton>button {
+    background-color: #3366cc;
+    color: white;
+    transition: all 0.3s ease;
+}
+.stButton>button:hover {
+    background-color: #264d99;
+    transform: scale(1.05);
+}
+.recommendations {
+    animation: fadeIn 1s ease-in;
+}
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
 </style>
 """
-st.markdown(background_color, unsafe_allow_html=True)
+st.markdown(animated_css, unsafe_allow_html=True)
 
-# Header
-st.markdown("<h1 style='text-align: center; color: #3366cc;'>🎬 Movie Recommender System</h1>", unsafe_allow_html=True)
+# Title
+st.markdown("<h1 class='title'>🎬 Movie Recommender System</h1>", unsafe_allow_html=True)
 
 # Input
 movie_name = st.text_input("Enter a movie title:")
@@ -83,8 +110,10 @@ movie_name = st.text_input("Enter a movie title:")
 if st.button("Recommend"):
     recommendations = recommend(movie_name)
     if recommendations:
+        st.markdown("<div class='recommendations'>", unsafe_allow_html=True)
         st.success("Here are 5 movies you might like:")
         for movie in recommendations:
             st.markdown(f"- **{movie}**")
+        st.markdown("</div>", unsafe_allow_html=True)
     else:
         st.error("Movie not found. Please try another title.")
