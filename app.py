@@ -1,9 +1,8 @@
-
 import streamlit as st
 import pandas as pd
-import pickle
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
+import ast
 
 # Load data
 movies = pd.read_csv("tmdb_5000_movies.csv")
@@ -14,24 +13,15 @@ movies = movies.merge(credits, on='title')
 movies = movies[['movie_id', 'title', 'overview', 'genres', 'keywords', 'cast', 'crew']]
 
 # Helper functions
-import ast
-
 def convert(obj):
     try:
-        L = []
-        for i in ast.literal_eval(obj):
-            L.append(i['name'])
-        return L
+        return [i['name'] for i in ast.literal_eval(obj)]
     except:
         return []
 
 def get_director(obj):
     try:
-        L = []
-        for i in ast.literal_eval(obj):
-            if i['job'] == 'Director':
-                L.append(i['name'])
-        return L
+        return [i['name'] for i in ast.literal_eval(obj) if i['job'] == 'Director']
     except:
         return []
 
@@ -66,15 +56,35 @@ def recommend(movie):
     return [new_df.iloc[i[0]].title for i in distances]
 
 # Streamlit UI
-st.title("Movie Recommender System")
+st.set_page_config(page_title="Movie Recommender", layout="centered")
 
+# Background styling
+background_color = """
+<style>
+body {
+    background-color: #f5f5f5;
+    color: #333333;
+}
+[data-testid="stAppViewContainer"] {
+    background-image: linear-gradient(to right, #ddeaff, #ffffff);
+    background-size: cover;
+}
+</style>
+"""
+st.markdown(background_color, unsafe_allow_html=True)
+
+# Header
+st.markdown("<h1 style='text-align: center; color: #3366cc;'>🎬 Movie Recommender System</h1>", unsafe_allow_html=True)
+
+# Input
 movie_name = st.text_input("Enter a movie title:")
 
+# Button and Output
 if st.button("Recommend"):
     recommendations = recommend(movie_name)
     if recommendations:
-        st.write("Recommended Movies:")
+        st.success("Here are 5 movies you might like:")
         for movie in recommendations:
-            st.write(movie)
+            st.markdown(f"- **{movie}**")
     else:
-        st.error("Movie not found. Try another.")
+        st.error("Movie not found. Please try another title.")
