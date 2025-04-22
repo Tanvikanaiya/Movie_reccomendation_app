@@ -59,6 +59,7 @@ def recommend(movie):
 st.set_page_config(page_title="Movie Recommender", layout="centered")
 
 # Stylish animated CSS
+# Stylish animated CSS
 animated_css = """
 <style>
 body {
@@ -92,8 +93,11 @@ h1.title {
     from { opacity: 0; }
     to { opacity: 1; }
 }
-.stSuccess, .stError {
-    color: black;  /* Set output text color to black */
+.stSuccess {
+    color: #003366;  /* Dark blue color for success messages */
+}
+.stError {
+    color: #003366;  /* Dark blue color for error messages */
 }
 </style>
 """
