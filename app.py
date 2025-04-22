@@ -63,7 +63,7 @@ animated_css = """
 <style>
 body {
     background-color: #f5f5f5;
-    color: black;
+    color: black;  /* Default text color */
     font-family: 'Segoe UI', sans-serif;
 }
 [data-testid="stAppViewContainer"] {
@@ -72,17 +72,13 @@ body {
 }
 h1.title {
     text-align: center;
-    color: black;
+    color: #4CAF50;  /* Title color changed to green */
     font-size: 3em;
     animation: slideDown 1s ease-in-out;
 }
-@keyframes slideDown {
-    from { transform: translateY(-50px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
-}
 .stButton>button {
     background-color: #3366cc;
-    color: white;
+    color: white;  /* Button text color */
     transition: all 0.3s ease;
 }
 .stButton>button:hover {
@@ -95,6 +91,9 @@ h1.title {
 @keyframes fadeIn {
     from { opacity: 0; }
     to { opacity: 1; }
+}
+.stSuccess, .stError {
+    color: black;  /* Set output text color to black */
 }
 </style>
 """
