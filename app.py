@@ -1,16 +1,10 @@
 import streamlit as st
 import pandas as pd
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
 
-
-# Ensure scikit-learn is installed
-try:
-    from sklearn.feature_extraction.text import CountVectorizer
-    from sklearn.metrics.pairwise import cosine_similarity
-except ModuleNotFoundError:
-    import os
-    os.system('pip install scikit-learn')  # Install scikit-learn if not found
-    from sklearn.feature_extraction.text import CountVectorizer
-    from sklearn.metrics.pairwise import cosine_similarity
+# Streamlit UI: Set page config as the first Streamlit command
+st.set_page_config(page_title="Movie Recommender", layout="centered")
 
 # Load dataset
 @st.cache_data
@@ -44,8 +38,6 @@ def recommend_movies(title, num=5):
     return [movies.iloc[i[0]] for i in scores]
 
 # Streamlit UI
-st.set_page_config(page_title="Movie Recommender", layout="centered")
-
 st.markdown(""" 
     <style>
     [data-testid="stAppViewContainer"] {
