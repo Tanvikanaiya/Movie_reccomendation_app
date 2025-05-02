@@ -4,24 +4,27 @@ from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
 # Load dataset
-movies = pd.read_csv("mymoviedb.csv")
-movies.drop_duplicates(subset='Title', inplace=True)
-movies.dropna(subset=['Overview', 'Genre'], inplace=True)
+@st.cache_data
+def load_data():
+    df = pd.read_csv("mymoviedb.csv")
+    df = df.drop_duplicates(subset='Title')
+    df = df.dropna(subset=['Overview', 'Genre', 'Poster_Url', 'Release_Date', 'Original_Language'])
+    df['Combined'] = df['Overview'] + " " + df['Genre']
+    return df
 
-# Create combined feature for content-based filtering
-movies['Combined'] = movies['Overview'] + " " + movies['Genre']
+movies = load_data()
 
-# Vectorization
-cv = CountVectorizer(max_features=5000, stop_words='english')
-vectors = cv.fit_transform(movies['Combined']).toarray()
+# Vectorization and similarity
+@st.cache_resource
+def compute_similarity(data):
+    cv = CountVectorizer(max_features=5000, stop_words='english')
+    vectors = cv.fit_transform(data['Combined']).toarray()
+    return cosine_similarity(vectors)
 
-# Similarity matrix
-similarity = cosine_similarity(vectors)
-
-# Index mapping
+similarity = compute_similarity(movies)
 movie_indices = pd.Series(movies.index, index=movies['Title'].str.lower())
 
-# Recommend function
+# Recommendation function
 def recommend_movies(title, num=5):
     title = title.lower()
     if title not in movie_indices:
@@ -48,18 +51,21 @@ st.markdown("""
 
 st.markdown("<h1 style='text-align: center;'>🎬 Movie Recommender System</h1>", unsafe_allow_html=True)
 
-# User input
+# Input
 movie_name = st.text_input("Enter a movie title:")
 
 if st.button("Recommend"):
-    recommendations = recommend_movies(movie_name)
-    if recommendations:
-        st.success("Here are some movies you might like:")
-        for movie in recommendations:
-            st.markdown(f"### 🎞️ {movie['Title']}")
-            st.write(f"**Release Date:** {movie['Release_Date']}")
-            st.write(f"**Original Language:** {movie['Original_Language']}")
-            st.image(movie['Poster_Url'], use_column_width=True)
-            st.markdown("---")
+    if movie_name.strip() == "":
+        st.warning("Please enter a movie title.")
     else:
-        st.error("Movie not found. Please check the title and try again.")
+        recommendations = recommend_movies(movie_name)
+        if recommendations:
+            st.success("Here are some movies you might like:")
+            for movie in recommendations:
+                st.markdown(f"### 🎞️ {movie['Title']}")
+                st.write(f"**Release Date:** {movie['Release_Date']}")
+                st.write(f"**Original Language:** {movie['Original_Language']}")
+                st.image(movie['Poster_Url'], use_column_width=True)
+                st.markdown("---")
+        else:
+            st.error("Movie not found. Please check the title and try again.")
