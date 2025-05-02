@@ -2,92 +2,64 @@ import streamlit as st
 import pandas as pd
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
-import ast
 
-# Load data
-movies = pd.read_csv("tmdb_5000_movies.csv")
-credits = pd.read_csv("tmdb_5000_credits.csv")
+# Load dataset
+movies = pd.read_csv("mymoviedb.csv")
+movies.drop_duplicates(subset='Title', inplace=True)
+movies.dropna(subset=['Overview', 'Genre'], inplace=True)
 
-# Merge datasets
-movies = movies.merge(credits, on='title')
-movies = movies[['movie_id', 'title', 'overview', 'genres', 'keywords', 'cast', 'crew']]
-
-# Helper functions
-def convert(obj):
-    try:
-        return [i['name'] for i in ast.literal_eval(obj)]
-    except:
-        return []
-
-def get_director(obj):
-    try:
-        return [i['name'] for i in ast.literal_eval(obj) if i['job'] == 'Director']
-    except:
-        return []
-
-def collapse(L):
-    return " ".join([i.replace(" ", "") for i in L])
-
-# Data Cleaning
-movies.dropna(inplace=True)
-movies['genres'] = movies['genres'].apply(convert)
-movies['keywords'] = movies['keywords'].apply(convert)
-movies['cast'] = movies['cast'].apply(lambda x: convert(x)[:3])
-movies['crew'] = movies['crew'].apply(get_director)
-movies['overview'] = movies['overview'].apply(lambda x: x.split())
-
-movies['tags'] = movies['overview'] + movies['genres'] + movies['keywords'] + movies['cast'] + movies['crew']
-new_df = movies[['movie_id', 'title', 'tags']]
-new_df['tags'] = new_df['tags'].apply(collapse)
+# Create combined feature for content-based filtering
+movies['Combined'] = movies['Overview'] + " " + movies['Genre']
 
 # Vectorization
 cv = CountVectorizer(max_features=5000, stop_words='english')
-vectors = cv.fit_transform(new_df['tags']).toarray()
+vectors = cv.fit_transform(movies['Combined']).toarray()
+
+# Similarity matrix
 similarity = cosine_similarity(vectors)
 
-# Recommendation function
-def recommend(movie):
-    movie = movie.lower()
-    if movie not in new_df['title'].str.lower().values:
+# Index mapping
+movie_indices = pd.Series(movies.index, index=movies['Title'].str.lower())
+
+# Recommend function
+def recommend_movies(title, num=5):
+    title = title.lower()
+    if title not in movie_indices:
         return []
-    idx = new_df[new_df['title'].str.lower() == movie].index[0]
-    distances = list(enumerate(similarity[idx]))
-    distances = sorted(distances, key=lambda x: x[1], reverse=True)[1:6]
-    return [new_df.iloc[i[0]].title for i in distances]
+    idx = movie_indices[title]
+    scores = list(enumerate(similarity[idx]))
+    scores = sorted(scores, key=lambda x: x[1], reverse=True)[1:num+1]
+    return [movies.iloc[i[0]] for i in scores]
 
 # Streamlit UI
 st.set_page_config(page_title="Movie Recommender", layout="centered")
 
-# Simple background and text style
-basic_css = """
-<style>
-body {
-    background-color: #f5f5f5;
-    color: black;
-}
-[data-testid="stAppViewContainer"] {
-    background-image: linear-gradient(to right, #ddeaff, #ffffff);
-    background-size: cover;
-}
-h1, h2, h3, h4, h5, h6, p, div {
-    color: black !important;
-}
-</style>
-"""
-st.markdown(basic_css, unsafe_allow_html=True)
+st.markdown("""
+    <style>
+    [data-testid="stAppViewContainer"] {
+        background-image: linear-gradient(to right, #ddeaff, #ffffff);
+        background-size: cover;
+    }
+    h1, h2, h3, h4, h5, h6, p, div {
+        color: black !important;
+    }
+    </style>
+""", unsafe_allow_html=True)
 
-# Header
 st.markdown("<h1 style='text-align: center;'>🎬 Movie Recommender System</h1>", unsafe_allow_html=True)
 
-# Input
+# User input
 movie_name = st.text_input("Enter a movie title:")
 
-# Button and Output
 if st.button("Recommend"):
-    recommendations = recommend(movie_name)
+    recommendations = recommend_movies(movie_name)
     if recommendations:
-        st.success("Here are 5 movies you might like:")
+        st.success("Here are some movies you might like:")
         for movie in recommendations:
-            st.markdown(f"- **{movie}**")
+            st.markdown(f"### 🎞️ {movie['Title']}")
+            st.write(f"**Release Date:** {movie['Release_Date']}")
+            st.write(f"**Original Language:** {movie['Original_Language']}")
+            st.image(movie['Poster_Url'], use_column_width=True)
+            st.markdown("---")
     else:
-        st.error("Movie not found. Please try another title.")
+        st.error("Movie not found. Please check the title and try again.")
