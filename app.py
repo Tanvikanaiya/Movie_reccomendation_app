@@ -65,7 +65,7 @@ div[class^="block-container"] label {
 </style>
 """, unsafe_allow_html=True)
 
-selected_lang = st.selectbox("Filter by language:", languages, key="language_filter")
+selected_lang = st.selectbox("Filter by language:", language, key="language_filter")
 selected_genre = st.selectbox("Filter by genre:", genres, key="genre_filter")
 
 # User Input
