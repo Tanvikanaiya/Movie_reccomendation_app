@@ -55,21 +55,18 @@ def recommend_movies(title, selected_lang, selected_genre, num=5):
 # Streamlit UI styling
 st.markdown("""
 <style>
-/* Change select label text color */
 div[class^="block-container"] label {
     color: #1f4e79;
     font-weight: bold;
 }
-
-/* Change dropdown text color */
 .css-1d391kg span {
     color: #1f4e79 !important;
 }
 </style>
 """, unsafe_allow_html=True)
 
-selected_lang = st.selectbox("Filter by language:", ["All"] + sorted(movies['Original_Language'].dropna().unique().tolist()))
-selected_genre = st.selectbox("Filter by genre:", ["All"] + sorted(set(g.strip() for sublist in movies['Genre'].dropna().str.split(",") for g in sublist)))
+selected_lang = st.selectbox("Filter by language:", languages, key="language_filter")
+selected_genre = st.selectbox("Filter by genre:", genres, key="genre_filter")
 
 # User Input
 movie_name = st.text_input("Enter a movie title:")
