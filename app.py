@@ -1,4 +1,3 @@
-
 import streamlit as st
 import pandas as pd
 from sklearn.feature_extraction.text import CountVectorizer
@@ -54,19 +53,18 @@ def recommend_movies(title, selected_lang, selected_genre, num=5):
 
 # Streamlit UI styling
 st.markdown("""
-<style>
-div[class^="block-container"] label {
-    color: #1f4e79;
-    font-weight: bold;
-}
-.css-1d391kg span {
-    color: #1f4e79 !important;
-}
-</style>
+    <style>
+    [data-testid="stAppViewContainer"] {
+        background-image: linear-gradient(to right, #ddeaff, #ffffff);
+        background-size: cover;
+    }
+    h1, h2, h3, h4, h5, h6, p, div {
+        color: black !important;
+    }
+    </style>
 """, unsafe_allow_html=True)
 
-selected_lang = st.selectbox("Filter by language:", language, key="language_filter")
-selected_genre = st.selectbox("Filter by genre:", genres, key="genre_filter")
+st.markdown("<h1 style='text-align: center;'>🎬 Movie Recommender System</h1>", unsafe_allow_html=True)
 
 # User Input
 movie_name = st.text_input("Enter a movie title:")
@@ -75,8 +73,8 @@ movie_name = st.text_input("Enter a movie title:")
 languages = ["All"] + sorted(movies['Original_Language'].dropna().unique().tolist())
 genres = ["All"] + sorted(set(g.strip() for sublist in movies['Genre'].dropna().str.split(",") for g in sublist))
 
-selected_lang = st.selectbox("🎯 Filter by language:", languages, key="filter_language_01")
-selected_genre = st.selectbox("🎭 Filter by genre:", genres, key="filter_genre_01")
+selected_lang = st.selectbox("Filter by language:", languages)
+selected_genre = st.selectbox("Filter by genre:", genres)
 
 if st.button("Recommend"):
     if movie_name.strip() == "":
