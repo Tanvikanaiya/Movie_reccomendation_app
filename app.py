@@ -75,8 +75,8 @@ movie_name = st.text_input("Enter a movie title:")
 languages = ["All"] + sorted(movies['Original_Language'].dropna().unique().tolist())
 genres = ["All"] + sorted(set(g.strip() for sublist in movies['Genre'].dropna().str.split(",") for g in sublist))
 
-selected_lang = st.selectbox("Filter by language:", languages)
-selected_genre = st.selectbox("Filter by genre:", genres)
+selected_lang = st.selectbox("🎯 Filter by language:", languages, key="filter_language_01")
+selected_genre = st.selectbox("🎭 Filter by genre:", genres, key="filter_genre_01")
 
 if st.button("Recommend"):
     if movie_name.strip() == "":
