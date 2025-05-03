@@ -3,6 +3,9 @@ import pandas as pd
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
+# ✅ Page config MUST be first
+st.set_page_config(page_title="Movie Recommender", layout="centered")
+
 # Load dataset
 @st.cache_data
 def load_data():
@@ -48,9 +51,7 @@ def recommend_movies(title, selected_lang, selected_genre, num=5):
     )
     return sorted_candidates[:num]
 
-# Streamlit UI
-st.set_page_config(page_title="Movie Recommender", layout="centered")
-
+# Streamlit UI styling
 st.markdown("""
     <style>
     [data-testid="stAppViewContainer"] {
