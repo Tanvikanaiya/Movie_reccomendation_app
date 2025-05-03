@@ -1,3 +1,4 @@
+
 import streamlit as st
 import pandas as pd
 from sklearn.feature_extraction.text import CountVectorizer
@@ -53,18 +54,22 @@ def recommend_movies(title, selected_lang, selected_genre, num=5):
 
 # Streamlit UI styling
 st.markdown("""
-    <style>
-    [data-testid="stAppViewContainer"] {
-        background-image: linear-gradient(to right, #ddeaff, #ffffff);
-        background-size: cover;
-    }
-    h1, h2, h3, h4, h5, h6, p, div {
-        color: black !important;
-    }
-    </style>
+<style>
+/* Change select label text color */
+div[class^="block-container"] label {
+    color: #1f4e79;
+    font-weight: bold;
+}
+
+/* Change dropdown text color */
+.css-1d391kg span {
+    color: #1f4e79 !important;
+}
+</style>
 """, unsafe_allow_html=True)
 
-st.markdown("<h1 style='text-align: center;'>🎬 Movie Recommender System</h1>", unsafe_allow_html=True)
+selected_lang = st.selectbox("Filter by language:", ["All"] + sorted(movies['Original_Language'].dropna().unique().tolist()))
+selected_genre = st.selectbox("Filter by genre:", ["All"] + sorted(set(g.strip() for sublist in movies['Genre'].dropna().str.split(",") for g in sublist)))
 
 # User Input
 movie_name = st.text_input("Enter a movie title:")
