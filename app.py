@@ -14,15 +14,24 @@ except FileNotFoundError:
     #  Important:  Stop execution if the data file is missing.
     st.stop()
 
+# Print the columns of the dataframe to debug.
+st.write("Columns in your DataFrame:", movies_data.columns)
+
 # Select relevant features
-selected_features = ['genres', 'keywords', 'tagline', 'cast', 'director']
+selected_features = ['Genre', 'keywords', 'tagline', 'cast', 'director'] # Changed 'genres' to 'Genre'
+
+# Check if all selected features are in the dataframe
+for feature in selected_features:
+    if feature not in movies_data.columns:
+        st.error(f"Error: Column '{feature}' not found in the CSV file.  Please check the column names in your 'mymoviedb.csv' file and update the 'selected_features' list if necessary.")
+        st.stop()  # Stop if any essential feature is missing.
 
 # Fill NaN values with empty strings
 for feature in selected_features:
     movies_data[feature] = movies_data[feature].fillna('')
 
 # Combine selected features
-combined_features = movies_data['genres'] + ' ' + movies_data['keywords'] + ' ' + movies_data['tagline'] + ' ' + movies_data['cast'] + ' ' + movies_data['director']
+combined_features = movies_data['Genre'] + ' ' + movies_data['keywords'] + ' ' + movies_data['tagline'] + ' ' + movies_data['cast'] + ' ' + movies_data['director'] #changed here as well
 
 # ---  Moved model training and data processing outside the function ---
 # --- This is more efficient, so it only runs once when the app starts ---
