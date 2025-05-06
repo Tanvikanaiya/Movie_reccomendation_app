@@ -87,14 +87,15 @@ if st.button("🎯 Recommend"):
     else:
         recommendations = recommend_movies(movie_name, selected_lang, selected_genre)
         if recommendations:
-            st.success("🔥 Movies You Might Like:")
-            for movie in recommendations:
-                st.markdown(f"### 🎞️ {movie['Title']}")
-                st.write(f"📅 **Release Date:** {movie['Release_Date']}")
-                st.write(f"🌐 **Language:** {movie['Original_Language']}")
-                st.write(f"⭐ **Rating:** {movie['Vote_Average']}")
-                st.image(movie['Poster_Url'], use_column_width=True)
-                st.markdown("---")
+    st.success("🔥 Movies You Might Like:")
+    for movie in recommendations:
+        st.markdown(f"### 🎞️ {movie['Title']}")
+        st.write(f"📅 **Release Date:** {movie['Release_Date']}")
+        st.write(f"🌐 **Language:** {movie['Original_Language']}")
+        st.write(f"🎭 **Genre:** {movie['Genre']}")
+        st.write(f"⭐ **Rating:** {movie['Vote_Average']}")
+        st.image(movie['Poster_Url'], use_column_width=True)
+        st.markdown("---")
         else:
             st.warning("No matching recommendations found. Try different filters.")
 
