@@ -96,6 +96,6 @@ if st.button("🎯 Recommend"):
                 st.write(f"⭐ **Rating:** {movie['Vote_Average']}")
                 st.image(movie['Poster_Url'], use_column_width=True)
                 st.markdown("---")
-        else:
-            st.warning("No matching recommendations found. Try different filters.")
+    else:
+       st.warning("No matching recommendations found. Try different filters.")
 
