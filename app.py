@@ -86,7 +86,7 @@ if st.button("🎯 Recommend"):
         st.error("Movie not found in database.")
     else:
         recommendations = recommend_movies(movie_name, selected_lang, selected_genre)
-       if recommendations:
+    if recommendations:
            st.success("🔥 Movies You Might Like:")
            for movie in recommendations:
                 st.markdown(f"### 🎞️ {movie['Title']}")
