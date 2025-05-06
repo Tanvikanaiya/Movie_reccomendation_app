@@ -21,7 +21,7 @@ movies = load_data()
 # Load embedding model and compute similarities
 @st.cache_resource
 def get_embeddings(data):
-    model = SentenceTransformer("all-MiniLM-L6-v2")
+    model = SentenceTransformer('./local_model')    
     embeddings = model.encode(data['Combined'].tolist(), convert_to_tensor=False)
     return embeddings, model
 
