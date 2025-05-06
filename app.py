@@ -1,112 +1,102 @@
 import streamlit as st
-import numpy as np
 import pandas as pd
-import difflib
-from sklearn.feature_extraction.text import TfidfVectorizer
+from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
-import pickle  # To save and load your model
 
-# Load data (assuming 'mymoviedb.csv' is in the same directory)
-try:
-    movies_data = pd.read_csv('mymoviedb.csv')
-except FileNotFoundError:
-    st.error("Error: 'mymoviedb.csv' not found. Please make sure the file is in the same directory as the script.")
-    #  Important:  Stop execution if the data file is missing.
-    st.stop()
+# ✅ Page config
+st.set_page_config(page_title="Movie Recommender", layout="centered")
 
-# Print the columns of the dataframe to debug.
-st.write("Columns in your DataFrame:", movies_data.columns)
+# ✅ Load data
+@st.cache_data
+def load_data():
+    df = pd.read_csv("mymoviedb.csv")
+    df = df.drop_duplicates(subset='Title')
+    df = df.dropna(subset=['Overview', 'Genre', 'Poster_Url', 'Release_Date', 'Original_Language'])
+    df['Combined'] = df['Overview'] + " " + df['Genre']
+    return df
 
-# Select relevant features
-selected_features = ['Genre', 'keywords', 'tagline', 'cast', 'director'] # Changed 'genres' to 'Genre'
+movies = load_data()
 
-# Check if all selected features are in the dataframe
-for feature in selected_features:
-    if feature not in movies_data.columns:
-        st.error(f"Error: Column '{feature}' not found in the CSV file.  Please check the column names in your 'mymoviedb.csv' file and update the 'selected_features' list if necessary.")
-        st.stop()  # Stop if any essential feature is missing.
+# ✅ Generate embeddings and similarity matrix
+@st.cache_resource
+def compute_embeddings(data):
+    model = SentenceTransformer('all-MiniLM-L6-v2')
+    embeddings = model.encode(data['Combined'].tolist(), convert_to_tensor=False)
+    return cosine_similarity(embeddings)
 
-# Fill NaN values with empty strings
-for feature in selected_features:
-    movies_data[feature] = movies_data[feature].fillna('')
+similarity = compute_embeddings(movies)
+movie_indices = pd.Series(movies.index, index=movies['Title'].str.lower())
 
-# Combine selected features
-combined_features = movies_data['Genre'] + ' ' + movies_data['keywords'] + ' ' + movies_data['tagline'] + ' ' + movies_data['cast'] + ' ' + movies_data['director'] #changed here as well
+# ✅ Recommendation logic
+def recommend_movies(title, selected_lang, selected_genre, num=5):
+    title = title.lower()
+    if title not in movie_indices:
+        return []
+    idx = movie_indices[title]
+    scores = list(enumerate(similarity[idx]))
+    scores = sorted(scores, key=lambda x: x[1], reverse=True)[1:30]
+    candidates = [movies.iloc[i[0]] for i in scores]
 
-# ---  Moved model training and data processing outside the function ---
-# --- This is more efficient, so it only runs once when the app starts ---
+    if selected_lang != "All":
+        candidates = [m for m in candidates if m['Original_Language'].lower() == selected_lang.lower()]
+    if selected_genre != "All":
+        candidates = [m for m in candidates if selected_genre.lower() in m['Genre'].lower()]
 
-# Convert text data to feature vectors
-vectorizer = TfidfVectorizer()
-feature_vectors = vectorizer.fit_transform(combined_features)
+    sorted_candidates = sorted(
+        candidates,
+        key=lambda x: (x['Vote_Average'], x['Popularity']),
+        reverse=True
+    )
+    return sorted_candidates[:num]
 
-# Calculate cosine similarity
-similarity = cosine_similarity(feature_vectors)
+# ✅ Dark mode styling
+st.markdown("""
+    <style>
+    body, [data-testid="stAppViewContainer"] {
+        background-color: #000000;
+        color: #FFFFFF;
+    }
+    .stTextInput input, .stSelectbox div[data-baseweb="select"] {
+        color: white !important;
+        background-color: #1c1c1c !important;
+    }
+    .stButton>button {
+        background-color: #4CAF50;
+        color: white;
+    }
+    h1, h2, h3, h4, h5, h6, p, div {
+        color: white !important;
+    }
+    </style>
+""", unsafe_allow_html=True)
 
-# Save the trained model, and important data.
-pickle.dump(vectorizer, open('tfidf_vectorizer.pkl', 'wb'))
-pickle.dump(similarity, open('similarity_matrix.pkl', 'wb'))
-pickle.dump(movies_data['title'].tolist(), open('movie_titles.pkl', 'wb')) #save titles
+# ✅ UI Title
+st.markdown("<h1 style='text-align: center;'>🎬 Movie Recommender System</h1>", unsafe_allow_html=True)
 
-@st.cache_resource()  # Add this decorator to cache the model loading
-def load_model_and_data():
-    """Loads the model and data"""
-    # Load the vectorizer, similarity matrix, and titles
-    tfidf_vectorizer = pickle.load(open('tfidf_vectorizer.pkl', 'rb'))
-    similarity_matrix = pickle.load(open('similarity_matrix.pkl', 'rb'))
-    movie_titles = pickle.load(open('movie_titles.pkl', 'rb'))
-    return tfidf_vectorizer, similarity_matrix, movie_titles
-    
-tfidf_vectorizer, similarity_matrix, list_of_all_titles = load_model_and_data() # Load
+# ✅ User Inputs
+movie_name = st.text_input("Enter a movie title:")
 
-def recommend_movies(movie_name):
-    """
-    Recommends movies similar to the given movie name.
+languages = ["All"] + sorted(movies['Original_Language'].dropna().unique().tolist())
+genres = ["All"] + sorted(set(g.strip() for sublist in movies['Genre'].dropna().str.split(",") for g in sublist))
 
-    Args:
-        movie_name (str): The name of the movie to find recommendations for.
+selected_lang = st.selectbox("Filter by language:", languages)
+selected_genre = st.selectbox("Filter by genre:", genres)
 
-    Returns:
-        list: A list of similar movie titles, or a message if no matches are found.
-    """
-    find_close_match = difflib.get_close_matches(movie_name, list_of_all_titles)
-
-    if not find_close_match:
-        return ["No close matches found. Please try another movie title."]
-
-    close_match = find_close_match[0]
-    index_of_the_movie = movies_data[movies_data.title == close_match]['index'].values[0]
-    similarity_score = list(enumerate(similarity_matrix[index_of_the_movie]))
-    sorted_similar_movies = sorted(similarity_score, key=lambda x: x[1], reverse=True)
-
-    recommendations = []
-    for i, movie in enumerate(sorted_similar_movies):
-        if i > 0 and i < 11:  # Exclude the input movie itself, and limit to top 10
-            index = movie[0]
-            title_from_index = movies_data[movies_data.index == index]['title'].values[0]
-            recommendations.append(title_from_index)
-    return recommendations
-
-# --- Streamlit App ---
-def main():
-    """
-    Main function to run the Streamlit app.
-    """
-    st.title('Movie Recommendation System')
-
-    movie_name = st.text_input('Enter your favorite movie name:', '')
-
-    if st.button('Show Recommendations'):
-        if movie_name:
-            recommendations = recommend_movies(movie_name)
-            if recommendations: #check is list is empty
-                st.subheader('Movies suggested for you:')
-                for i, recommended_movie in enumerate(recommendations):
-                    st.write(f"{i+1}. {recommended_movie}")
-            else:
-                st.write("No movies found")
+# ✅ Button and results
+if st.button("Recommend"):
+    if movie_name.strip() == "":
+        st.warning("Please enter a movie title.")
+    else:
+        recommendations = recommend_movies(movie_name, selected_lang, selected_genre)
+        if recommendations:
+            st.success("Here are some movies you might like:")
+            for movie in recommendations:
+                st.markdown(f"### 🎞️ {movie['Title']}")
+                st.write(f"**Release Date:** {movie['Release_Date']}")
+                st.write(f"**Language:** {movie['Original_Language']}")
+                st.write(f"**Rating:** {movie['Vote_Average']} ⭐")
+                st.write(f"**Popularity:** {round(movie['Popularity'], 2)} 🔥")
+                st.image(movie['Poster_Url'], use_column_width=True)
+                st.markdown("---")
         else:
-            st.warning('Please enter a movie name.')
-
-if __name__ == '__main__':
-    main()
+            st.warning("No recommendations found. Try changing the filters or title.")
